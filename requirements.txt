@@ -1,0 +1,16 @@
+
+google-genai
+python-dotenv
+pydantic
+sqlalchemy
+streamlit
+fastapi
+uvicorn
+httpx
+pytest
+email-validator
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+

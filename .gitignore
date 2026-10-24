@@ -1,0 +1,63 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Google OAuth credentials and tokens
+credentials.json
+token.json
+gmail_token.json
+client_secret*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Data files
+data/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+token_calendar_backup.json
+gmail_token*.json
+token*.json
+credentials*.json
+
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+credentials*.json
+client_secret*.json
+token*.json
+gmail_token*.json
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local data
+data/
+
+sales_app.py.backup
+sales_app_backup.py
+sales_app_before_gmail_analysis.py
+
+# Local backup files
+*.backup
+*_backup.py
