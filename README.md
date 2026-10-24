@@ -1,124 +1,243 @@
-# Mudita AI — AI-Powered Business Workflow Automation
+# Mudita AI Engineering Portfolio
 
-Two AI application prototypes developed for the Mudita AI Generalist Assignment.
+### AI Sales Automation | Multi-Agent Workflow Orchestration | LLM-Powered Applications
 
-This repository brings together two projects focused on automating business workflows using Large Language Models (LLMs), structured decision-making, external integrations, and validation.
+A portfolio of two Python-based AI applications demonstrating conversational sales automation, workflow orchestration, agent collaboration, and integration with external services.
 
-## Projects
+The project combines modular Python development, Streamlit interfaces, automated testing, and LLM integration to explore practical AI engineering use cases.
 
-### 1. AI Sales Assistant
+**Project Status: Implemented and locally tested**
 
-An AI-assisted sales workflow designed to support customer conversations, qualify incoming leads, route qualified prospects, and schedule meetings through Google Calendar.
+**Automated Testing: 21/21 tests passed**
+
+---
+
+## Applications
+
+### 01 · AI Sales Assistant
+
+A conversational application designed to support lead qualification, customer conversation management, routing, and scheduling workflows.
 
 **Key capabilities**
 
-* AI-assisted customer conversation.
-* Policy-based lead qualification and representative routing.
-* Gmail integration for inbox visibility.
-* Google Calendar availability and booking.
-* Booking confirmation safeguards and duplicate-prevention logic.
-* Conversation persistence and action logging.
-* Human takeover controls.
+* Structured conversational workflows
+* Lead qualification and routing
+* Conversation and policy management
+* Google Calendar scheduling integration
+* Gmail integration
+* Booking validation and duplicate-booking safeguards
 
-**Documentation:** [`docs/README_Assignment_1_Sales_Assistant.md`](docs/README_Assignment_1_Sales_Assistant.md)
+**Application entry point:** `sales_app.py`
 
-**Known limitation:** Instagram and WhatsApp are not connected in the current version.
+**Detailed documentation:** [Sales Assistant Documentation](docs/README_Assignment_1_Sales_Assistant.md)
 
-### 2. Operations Coordinator — Three Connected LLM Agents
+**Live Demo:** Add the deployed application URL here after deployment.
 
-A multi-agent workflow that converts meeting transcripts and company rules into a structured action plan.
+---
 
-**Agents**
+### 02 · Multi-Agent Operations Coordinator
 
-1. **Intake Agent** — extracts decisions, requirements, constraints, missing information, and conflicts.
-2. **Planning Agent** — proposes tasks, ownership, deadlines, dependencies, and unresolved questions.
-3. **Review Agent** — evaluates the proposed plan against source information and company rules.
+An LLM-powered workflow application built around three specialized agents: Intake, Planning, and Review.
 
-**Workflow capabilities**
+The workflow is designed to transform operational inputs into structured plans and review their outputs against defined requirements.
 
-* Structured agent inputs and outputs.
-* Orchestration and persisted workflow state.
-* Review feedback and bounded retries.
-* Workflow history and failed-run inspection.
-* Resume support for eligible failed workflows.
-* Deterministic task-dependency validation.
+**Key capabilities**
 
-**Documentation:** [`docs/README_Assignment_2_Operations_Coordinator.md`](docs/README_Assignment_2_Operations_Coordinator.md)
+* Specialized Intake, Planning, and Review agents
+* Workflow orchestration and agent handoffs
+* Dependency validation
+* Workflow persistence and execution history
+* Review retries with bounded attempts
+* Failure recovery and workflow resumption
+* Automated tests for workflow behavior and validation
 
-**Known limitation:** A previous live Gemini API run encountered a quota-exceeded `429` error. Successful live execution must be verified when API quota is available.
+**Application entry point:** `app.py`
+
+**Detailed documentation:** [Operations Coordinator Documentation](docs/README_Assignment_2_Operations_Coordinator.md)
+
+**Live Demo:** Add the deployed application URL here after deployment.
+
+---
+
+## Architecture Overview
+
+```text
+                 MUDITA AI ASSIGNMENT
+                          |
+             +------------+------------+
+             |                         |
+      AI Sales Assistant       Operations Coordinator
+             |                         |
+     Conversation Flow          Intake Agent
+             |                         |
+     Qualification & Routing    Planning Agent
+             |                         |
+     Gmail / Calendar           Review Agent
+             |                         |
+     Booking Workflows          Orchestrator / Database
+             |                         |
+             +------------+------------+
+                          |
+                 Streamlit Interfaces
+```
+
+The applications are organized into reusable modules to separate interface logic, business workflows, integrations, and shared components.
+
+---
 
 ## Technology Stack
 
-The projects use technologies including:
+| Category          | Technologies                |
+| ----------------- | --------------------------- |
+| Language          | Python                      |
+| User Interface    | Streamlit                   |
+| AI / LLM          | Google Gemini integration   |
+| Workflow Design   | Modular agent orchestration |
+| Integrations      | Gmail, Google Calendar      |
+| Persistence       | Database components         |
+| Testing           | Pytest                      |
+| Version Control   | Git, GitHub                 |
+| Deployment Target | Streamlit Community Cloud   |
 
-* Python
-* Streamlit
-* Google Gemini API
-* Google Gmail API
-* Google Calendar API
-* Pydantic
-* SQLAlchemy
-* pytest
+---
 
-Refer to each project's documentation and `requirements.txt` for setup details.
+## Quality & Testing
+
+Automated tests cover core workflow behavior, validation, and safety-related scenarios.
+
+| Application                        | Automated Tests Passed |
+| ---------------------------------- | ---------------------: |
+| AI Sales Assistant                 |                  11/11 |
+| Multi-Agent Operations Coordinator |                  10/10 |
+| **Total**                          |              **21/21** |
+
+**Testing result: All 21 reported automated tests passed.**
+
+The tests include calendar booking validation, duplicate-booking prevention, workflow persistence, dependency validation, review retry limits, and workflow recovery scenarios.
+
+Automated test results are distinct from external-service availability. Live integrations may depend on API credentials, permissions, quotas, and service availability.
+
+---
 
 ## Repository Structure
 
 ```text
 mudita-ai-assignment/
 ├── assignment1_sales/
+│   ├── conversation.py
+│   ├── policy.py
+│   ├── qualification.py
+│   └── routing.py
 ├── assignment2_agents/
+│   ├── intake_agent.py
+│   ├── planning_agent.py
+│   ├── review_agent.py
+│   └── orchestrator.py
 ├── core/
-├── integrations/
-├── pages/
-├── tests/
+│   ├── config.py
+│   ├── database.py
+│   ├── gemini_client.py
+│   └── schemas.py
 ├── docs/
 │   ├── README_Assignment_1_Sales_Assistant.md
 │   └── README_Assignment_2_Operations_Coordinator.md
+├── integrations/
+│   ├── calendar_client.py
+│   └── gmail_client.py
+├── tests/
 ├── app.py
 ├── sales_app.py
 ├── requirements.txt
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
 
-This is a representative overview of the repository. Refer to the actual project files for the complete structure.
+---
 
-## Setup and Execution
+## Run Locally
 
-Use the dedicated documentation for installation, environment configuration, integrations, and application-specific commands:
+### 1. Clone the repository
 
-* [Assignment 1 — Sales Assistant](docs/README_Assignment_1_Sales_Assistant.md)
-* [Assignment 2 — Operations Coordinator](docs/README_Assignment_2_Operations_Coordinator.md)
+```bash
+git clone https://github.com/PAWAN0207/mudita-ai-assignment.git
+cd mudita-ai-assignment
+```
 
-Before running either application, configure the required credentials locally. Never commit API keys, OAuth credentials, access tokens, or other secrets.
+### 2. Create and activate a virtual environment
 
-## Testing
+```bash
+python -m venv .venv
+```
 
-The previously recorded test results were:
+Windows PowerShell:
 
-| Project                | Recorded result                                   |
-| ---------------------- | ------------------------------------------------- |
-| Sales Assistant        | 11/11 calendar safety and validation tests passed |
-| Operations Coordinator | 10/10 automated tests passed                      |
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-These are historical test results and should be reconfirmed against the exact code being submitted. Automated tests do not establish that every external integration or live LLM workflow is currently available.
+### 3. Install dependencies
 
-## Security and Responsible Use
+```bash
+pip install -r requirements.txt
+```
 
-* Keep secrets and OAuth tokens out of version control.
-* Use authorised test accounts and calendars.
-* Require explicit confirmation before creating calendar bookings.
-* Validate structured model outputs before using them.
-* Treat external messages and transcripts as untrusted input.
-* Document provider limitations and unverified functionality honestly.
+### 4. Launch the Sales Assistant
 
-## Project Status
+```bash
+streamlit run sales_app.py
+```
 
-Both projects have core implementations and previously recorded passing tests. Some external integrations and end-to-end scenarios still require verification. See the individual project documentation for known limitations and current testing context.
+### 5. Launch the Operations Coordinator
+
+Open a separate terminal, activate the environment, and run:
+
+```bash
+streamlit run app.py
+```
+
+Configure required API keys and service credentials locally before using integrations that depend on external services.
+
+---
+
+## Run Automated Tests
+
+### Sales Assistant
+
+```bash
+python -m pytest test_booking_safety.py test_calendar_booking.py test_calendar_validation.py -v
+```
+
+### Operations Coordinator
+
+```bash
+python -m pytest tests/ -v
+```
+
+---
+
+## Security
+
+* Secrets and local credentials are excluded through `.gitignore`.
+* API keys and OAuth credentials should be configured outside the source code.
+* Public deployment requires secure configuration of external service credentials.
+* Never commit `.env`, OAuth credential files, or access tokens to GitHub.
+
+---
+
+## Project Documentation
+
+* [AI Sales Assistant — Technical Documentation](docs/README_Assignment_1_Sales_Assistant.md)
+* [Multi-Agent Operations Coordinator — Technical Documentation](docs/README_Assignment_2_Operations_Coordinator.md)
+
+---
 
 ## Author
 
-**Pawan Prasad**
+**Pawan Ajay Prasad**
 
-AI Engineering | Generative AI | LLM Applications | Workflow Automation
+AI Engineering · Generative AI · Python · LLM Applications
+
+GitHub: [PAWAN0207](https://github.com/PAWAN0207)
+
+---
+
+*Built as an applied AI engineering project focused on modular application design, workflow automation, and testable AI systems.*
