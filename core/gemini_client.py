@@ -6,26 +6,43 @@ from google import genai
 from google.genai import errors, types
 
 
-# Load environment variables from the project's .env file
+# Project root directory
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 
+# Load .env for local development
 ENV_FILE = os.path.join(PROJECT_ROOT, ".env")
 load_dotenv(ENV_FILE)
 
 
-# Read Gemini API configuration
-API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+def get_secret(name: str, default=None):
+    """
+    Read configuration from environment variables or Streamlit Secrets.
+    Environment variables take priority.
+    """
+    value = os.getenv(name)
 
+    if value:
+        return value
+
+    try:
+        import streamlit as st
+
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+# Gemini configuration
+API_KEY = get_secret("GEMINI_API_KEY")
+MODEL_NAME = get_secret("GEMINI_MODEL", "gemini-2.5-flash")
 
 if not API_KEY:
     raise RuntimeError(
         "GEMINI_API_KEY is missing. "
-        "Please check the .env file in your project root."
+        "Set it in your local .env file or Streamlit Cloud Secrets."
     )
-
 
 # Initialize Gemini client
 client = genai.Client(api_key=API_KEY)
@@ -34,19 +51,11 @@ client = genai.Client(api_key=API_KEY)
 def generate_response(prompt: str, json_mode: bool = False) -> str:
     """
     Generate a response using the Gemini API.
-
-    Args:
-        prompt: Input prompt for Gemini.
-        json_mode: If True, request a JSON-formatted response.
-
-    Returns:
-        Gemini's response as a string.
+    Supports both normal text and JSON output.
     """
-
     if not prompt or not prompt.strip():
         raise ValueError("Prompt cannot be empty.")
 
-    # Configure JSON output for structured agent responses
     config = None
 
     if json_mode:
@@ -65,8 +74,7 @@ def generate_response(prompt: str, json_mode: bool = False) -> str:
 
         if not response_text or not response_text.strip():
             raise RuntimeError(
-                "Gemini returned an empty response. "
-                "Please try again."
+                "Gemini returned an empty response. Please try again."
             )
 
         return response_text.strip()
@@ -89,4 +97,3 @@ if __name__ == "__main__":
 
     except Exception as exc:
         print("Gemini API test failed:", str(exc))
-
