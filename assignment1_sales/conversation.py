@@ -1,7 +1,6 @@
 
 import json
-from google import genai
-from google.genai import types
+
 from core.gemini_client import generate_response
 from core.schemas import SalesConversationResponse
 from assignment1_sales.policy import get_default_policy
@@ -12,8 +11,9 @@ def process_customer_message(
     conversation_history: list[dict] | None = None,
     policy: dict | None = None,
 ) -> SalesConversationResponse:
+    """Process a customer message and generate a structured response."""
 
-    if not message or not message.strip():
+    if not isinstance(message, str) or not message.strip():
         raise ValueError("Customer message cannot be empty.")
 
     active_policy = policy or get_default_policy()
@@ -60,9 +60,9 @@ Do not guess missing values.
 """
 
     response_text = generate_response(
-    prompt,
-    json_mode=True,
-)
+        prompt,
+        json_mode=True,
+    )
 
     try:
         response_data = json.loads(response_text)
@@ -85,7 +85,17 @@ Do not guess missing values.
 
         return result
 
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        print(
+            "Conversation parsing/validation error:",
+            repr(exc),
+        )
+        print(
+            "Gemini response:",
+            repr(response_text[:500]),
+        )
+
         raise ValueError(
-            "Gemini returned an invalid conversation response."
+            "Gemini returned an invalid conversation response. "
+            "Check the diagnostic output above."
         ) from exc
