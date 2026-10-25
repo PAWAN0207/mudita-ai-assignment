@@ -1,403 +1,519 @@
-# Mudita AI --- Applied AI Engineering Assignments
+::: {align="center"}
+# 🤖 Mudita AI --- Applied AI Engineering Assignments
 
-**AI Sales Assistant · Multi-Agent Operations Coordinator**
+### AI Sales Assistant · AI Operations Coordinator
 
-Two Python/Streamlit applications demonstrating practical LLM
-integration, structured business workflows, external-service
-integrations, validation, and human-controlled safeguards.
+**Two practical AI applications combining LLMs, structured workflows,
+real integrations, and human-centred safeguards.**
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)](https://streamlit.io/)
-[![Gemini](https://img.shields.io/badge/LLM-Google%20Gemini-4285F4)](https://ai.google.dev/)
-[![Tests](https://img.shields.io/badge/Tests-21%20previously%20reported%20passing-brightgreen)](#testing)
-
-> **Public demo guidance:** Use synthetic, non-sensitive test inputs. Do
-> not enter passwords, confidential business information, or personal
-> data.
-
-## Live Applications
-
-  --------------------------------------------------------------------------------------------------------------------
-  Assignment              Live demo                                                            Explore
-  ----------------------- -------------------------------------------------------------------- -----------------------
-  **1 --- AI Sales        [Open Sales                                                          Customer conversation,
-  Assistant**             Assistant](https://mudita-sales-assistant.streamlit.app/)            lead qualification,
-                                                                                               Gmail inbox analysis,
-                                                                                               Calendar
-                                                                                               availability/booking,
-                                                                                               human takeover, action
-                                                                                               logs.
-
-  **2 --- AI Operations   [Open Operations                                                     Submit an operational
-  Coordinator**           Coordinator](https://mudita-operations-coordinator.streamlit.app/)   request and inspect the
-                                                                                               Intake → Planning →
-                                                                                               Review workflow.
-  --------------------------------------------------------------------------------------------------------------------
-
-**Access:** Open a link in your browser; no local installation is
-required to view the hosted UI. Feature availability depends on deployed
-secrets, API quota, and third-party authorization. Recheck both apps
-before submission and keep them accessible for at least **seven days
-after submission**. A page loading successfully does not guarantee every
-integration is connected.
-
-## What Makes This Project Different?
-
-This is more than a chat interface. The applications combine LLM
-capabilities with explicit Python business logic and safeguards.
-
--   **Structured LLM output:** The Sales Assistant requests JSON and
-    validates it with a Pydantic model before using extracted facts.
--   **AI/business-logic separation:** Gemini interprets customer
-    language; dedicated Python functions perform lead qualification and
-    representative routing.
--   **Read-only Gmail lead workflow:** Retrieves emails and uses
-    pattern/regex extraction on selected email content. It does not send
-    or modify email.
--   **Confirmation-gated scheduling:** Calendar booking requires
-    explicit confirmation, validates required details and business-hour
-    rules, rechecks availability, and handles duplicate/conflict
-    outcomes.
--   **Human takeover:** A representative can pause AI message processing
-    and resume it later.
--   **Three distinct agents:** Intake extracts operational information,
-    Planning creates tasks and dependencies, and Review evaluates the
-    proposed plan.
--   **Explicit context handoffs:** Structured output from one stage is
-    passed to the next instead of treating the workflow as one
-    undifferentiated prompt.
--   **Transparent unresolved information:** Missing task owners remain
-    unresolved rather than being silently invented.
--   **Persistence and traceability:** Database-backed
-    conversation/workflow records and action/execution history support
-    review and debugging.
--   **Modular, testable design:** UI, business rules, integrations,
-    schemas, model access, and orchestration are separated.
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Apps-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Google
+Gemini](https://img.shields.io/badge/LLM-Google%20Gemini-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![Tests](https://img.shields.io/badge/Tests-22%20Passed-brightgreen)](#testing)
+[![Deployment](https://img.shields.io/badge/Deployment-Streamlit%20Cloud-FF4B4B)](https://streamlit.io/cloud)
+:::
 
 ------------------------------------------------------------------------
 
-# Assignment 1 --- AI Sales Assistant
+## 🚀 Live Demos
 
-## Goal
+  ------------------------------------------------------------------------------------------------------------
+  Application             Open Live App                                                What You Can Explore
+  ----------------------- ------------------------------------------------------------ -----------------------
+  **Assignment 1 --- AI   **[Launch Sales Assistant                                    Customer conversations,
+  Sales Assistant**       ↗](https://mudita-sales-assistant.streamlit.app/)**          lead qualification,
+                                                                                       Gmail lead analysis,
+                                                                                       Calendar availability
+                                                                                       and booking, human
+                                                                                       takeover, and action
+                                                                                       logs.
 
-Support sales workflows by managing customer inquiries, extracting
-qualification details, routing qualified leads, analyzing inbound Gmail
-messages, and scheduling consultations through Google Calendar.
+  **Assignment 2 --- AI   **[Launch Operations Coordinator                             Submit a business
+  Operations              ↗](https://mudita-operations-coordinator.streamlit.app/)**   request and inspect the
+  Coordinator**                                                                        Intake → Planning →
+                                                                                       Review multi-agent
+                                                                                       workflow.
+  ------------------------------------------------------------------------------------------------------------
 
-## Features
+> **Demo access:** Open either link in your browser; no local
+> installation is required to view the hosted app. Live feature
+> availability depends on deployment configuration, API quota, and
+> third-party authorization. Use synthetic, non-sensitive demo data
+> only. Keep both apps accessible for at least **seven days after
+> submission**.
 
-### Customer conversation
+------------------------------------------------------------------------
 
--   Uses Google Gemini to generate context-aware responses.
+## 📌 Project Overview
+
+This repository contains two independent Streamlit applications built
+for practical AI workflow automation.
+
+-   **AI Sales Assistant:** Supports customer conversations, lead
+    qualification, representative routing, Gmail-based lead analysis,
+    and appointment scheduling.
+-   **AI Operations Coordinator:** Converts unstructured business
+    instructions into a structured task plan using three specialized
+    agents.
+
+The central design principle is to **combine LLM language understanding
+with explicit Python business rules, structured validation, real
+integrations, and clear workflow boundaries**---rather than relying on a
+single unconstrained prompt.
+
+## ✨ What Makes This Project Stand Out?
+
+-   **Structured AI responses:** The Sales Assistant requests JSON and
+    validates the response with a Pydantic model before using extracted
+    facts.
+-   **LLM/business-logic separation:** Gemini supports natural-language
+    understanding; dedicated Python functions handle lead qualification
+    and representative routing.
+-   **Real Gmail retrieval:** Retrieves emails and analyses selected
+    content using pattern/regex-based extraction. The inbox workflow is
+    read-only.
+-   **Confirmation-gated scheduling:** Booking requires explicit
+    confirmation, validates required details, checks availability, and
+    handles duplicate/conflict outcomes.
+-   **Human takeover:** A representative can pause AI message processing
+    and resume it when appropriate.
+-   **Three specialized agents:** Intake, Planning, and Review have
+    distinct responsibilities and pass structured context between
+    stages.
+-   **Transparent missing information:** Unresolved task owners remain
+    visible instead of being silently invented.
+-   **Traceability:** Conversation/workflow persistence and
+    action/execution history support review and debugging.
+-   **Modular, testable design:** UI, business rules, integrations,
+    schemas, model access, and orchestration are separated into
+    dedicated modules.
+
+------------------------------------------------------------------------
+
+# 1. 💼 Assignment 1 --- AI Sales Assistant
+
+## Objective
+
+Reduce repetitive sales operations by bringing customer conversations,
+lead qualification, representative routing, inbound email analysis, and
+appointment scheduling into one interface.
+
+## Key Features
+
+### 💬 Customer Conversation
+
+-   Uses Google Gemini to generate context-aware customer responses.
 -   Includes company policy and conversation history in the prompt.
--   Requests structured JSON containing a reply, extracted facts, and
+-   Requests structured output containing a reply, extracted facts, and
     follow-up status.
--   Validates the response with `SalesConversationResponse`.
+-   Validates the response using the `SalesConversationResponse` schema.
 -   Filters extracted facts to supported fields such as service
     interest, budget, and timeline.
--   Avoids claiming a booking succeeded before Calendar confirms it.
+-   Instructs the model not to invent unsupported services or claim a
+    booking before confirmation.
 
-### Lead qualification and representative routing
+### 🎯 Lead Qualification & Representative Routing
 
--   Uses a dedicated Python function to evaluate service interest,
-    budget, and timeline against configured policy.
--   Keeps qualification logic separate from LLM-generated conversation
-    text.
--   Routes qualified leads through a separate representative-assignment
+-   Uses a dedicated Python qualification function to evaluate service
+    interest, budget, and timeline against configured business rules.
+-   Separates language interpretation from qualification logic.
+-   Routes qualified leads through a dedicated representative-assignment
     function.
 -   Preserves missing information rather than treating unknown values as
-    facts.
+    confirmed facts.
 
-### Gmail inbox analysis
+### 📧 Gmail Inbox Analysis
 
--   Checks the authorized Gmail connection and retrieves recent inbox
-    messages.
--   Supports up to 50 recent messages.
--   Retrieves full details for a selected email.
+-   Checks the Gmail connection and retrieves recent emails.
+-   Supports selecting up to 50 recent emails.
+-   Retrieves full details for a selected email before analysis.
 -   Uses configured service names and regex/pattern matching to extract
     service interest, budget, and timeline.
--   Reuses qualification and routing logic after extraction.
--   **Read-only:** uses Gmail's read-only scope; it does not send,
-    delete, or modify email.
+-   Reuses lead qualification and routing logic after extraction.
+-   **Read-only workflow:** does not send, delete, or modify emails.
 
-### Google Calendar availability and booking
+### 📅 Google Calendar Availability & Booking
 
--   Checks available 30-minute slots within configured working hours.
+-   Checks available 30-minute appointment slots within configured
+    business hours.
 -   Uses the `Asia/Kolkata` timezone in the Calendar client.
 -   Requires explicit confirmation before creating a booking.
--   Validates customer name, email, service, date/time, working days,
-    and duration.
--   Rechecks availability before event creation.
--   Uses a deterministic event identifier to help prevent duplicate
-    bookings.
--   Handles `booked`, `already_booked`, and `booking_conflict` outcomes.
+-   Validates required customer details and date/time constraints.
+-   Rechecks availability in the conversation booking flow before event
+    creation.
+-   Handles outcomes such as `booked`, `already_booked`, and
+    `booking_conflict`.
 
-### Human takeover and action history
+### 🧑‍💼 Human Takeover & Action Logs
 
--   Pauses AI processing while human takeover is active.
+-   Pauses AI message processing while human takeover is active.
 -   Provides a control to resume AI handling.
--   Persists conversation state and records key actions through the
+-   Persists conversation information and records actions through the
     database layer.
--   Provides an Action Logs view.
+-   Includes an Action Logs view to inspect recorded activity.
 
-## Sales Assistant architecture
+## Sales Assistant Architecture
 
 ``` text
-Customer message ──> Streamlit UI ──> Gemini conversation processing
-                                         |
-                                         v
-                               Structured JSON response
-                                         |
-                                         v
-                               Schema validation/fact update
-                                         |
-                                         v
-                               Policy-based lead qualification
-                                         |
-                                         v
-                               Representative routing
+                         ┌──────────────────────┐
+                         │ Customer / Sales User│
+                         └──────────┬───────────┘
+                                    │
+                                    v
+                         ┌──────────────────────┐
+                         │    Streamlit UI      │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┴────────────────┐
+                    │                                │
+                    v                                v
+       ┌────────────────────────┐       ┌────────────────────────┐
+       │ Customer Conversation  │       │      Gmail Client      │
+       └────────────┬───────────┘       └────────────┬───────────┘
+                    │                                │
+                    v                                v
+       ┌────────────────────────┐       ┌────────────────────────┐
+       │ Shared Gemini Client   │       │ Pattern/Regex Analysis │
+       └────────────┬───────────┘       └────────────┬───────────┘
+                    │                                │
+                    └───────────────┬────────────────┘
+                                    v
+                         ┌──────────────────────┐
+                         │ Extracted Lead Facts │
+                         └──────────┬───────────┘
+                                    v
+                         ┌──────────────────────┐
+                         │ Lead Qualification   │
+                         └──────────┬───────────┘
+                                    v
+                         ┌──────────────────────┐
+                         │ Representative Route │
+                         └──────────────────────┘
 
-Gmail API ──> Recent emails ──> Pattern/regex extraction ──┘
+        Calendar Client <──> Availability Check
+                                  │
+                                  v
+                         Explicit Confirmation
+                                  │
+                                  v
+                           Recheck & Booking
 
-Calendar API <──> Availability check ──> Explicit confirmation
-                                      ──> Recheck ──> Create event
-
-Conversation state and actions ──> Database / Action Logs
-Human takeover ──> Pauses AI message processing
+        Conversation State / Actions ──> Database & Action Logs
+        Human Takeover ────────────────> Pauses AI message processing
 ```
+
+### Sales Conversation Data Flow
+
+1.  The customer submits a message.
+2.  The application checks input validity and human-takeover state.
+3.  Normal messages are processed with company policy and conversation
+    history.
+4.  Gemini returns a structured response.
+5.  The response is parsed and validated before extracted facts are
+    used.
+6.  The application evaluates the lead and may route a qualified lead.
+7.  Conversation state and key actions can be persisted.
+8.  Appointment requests follow a separate availability and confirmation
+    workflow.
 
 ------------------------------------------------------------------------
 
-# Assignment 2 --- AI Operations Coordinator
+# 2. 🧠 Assignment 2 --- AI Operations Coordinator
 
-## Goal
+## Objective
 
 Transform unstructured business instructions into a structured,
-reviewable action plan using three specialized agents.
+reviewable action plan through three specialized agents.
 
-### 1. Intake Agent
+## The Three Agents
 
-Extracts the objective, requirements, deadlines, constraints, missing
-information, and potential conflicts from the original request. It
-should preserve unknown details instead of inventing owners or
-deadlines.
+### 1️⃣ Intake Agent --- Understand the Request
 
-### 2. Planning Agent
+Extracts the business objective, requirements, deadlines, constraints,
+missing information, and potential conflicts from the original request.
 
-Converts structured intake information into actionable tasks. The plan
-can include task IDs, descriptions, known owners, dependencies, and
-unresolved details. Dependencies describe the proposed plan; they do not
-prove that the real-world work has been completed.
+**Why it matters:** The next stage receives structured context instead
+of needing to interpret the original paragraph independently.
 
-### 3. Review Agent
+### 2️⃣ Planning Agent --- Build the Task Plan
 
-Evaluates the generated plan and returns a structured review result,
-including approval status and reported issues. `APPROVED` means the
-proposed plan passed the configured review stage---not that the
-underlying business tasks were executed.
+Uses the structured intake information to generate tasks, owners where
+known, and dependencies.
 
-### Orchestration and context sharing
+Example plan:
 
 ``` text
-Business request
-      |
-      v
-Intake Agent ──> requirements, deadlines, constraints, missing details
-      |
-      v
-Planning Agent ──> tasks, owners, dependencies, unresolved details
-      |
-      v
-Review Agent ──> approval result and reported issues
-      |
-      v
-Workflow result / execution history
+TASK-001: Prepare requirements document (Owner: Priya)
+                         |
+                         v
+TASK-002: Implement dashboard (Owner: Unassigned)
+                         |
+                         v
+TASK-003: Test dashboard (Owner: Unassigned)
 ```
 
-The orchestrator coordinates the stages. The Planning Agent uses the
-structured information produced by Intake, and the Review Agent
-evaluates the generated plan. This makes the workflow easier to inspect,
-test, and debug.
+This example illustrates proposed dependencies; it does not mean the
+tasks have been executed. Unknown owners remain unresolved rather than
+being invented.
 
-### Reliability features
+### 3️⃣ Review Agent --- Evaluate the Plan
 
--   Shared Gemini client for centralized model configuration.
+Reviews the generated plan and returns a structured result that includes
+approval status and reported issues.
+
+**Important:** `APPROVED` means the proposed plan passed the configured
+review stage. It does **not** mean the underlying business work has been
+completed.
+
+## Orchestration & Context Sharing
+
+``` text
+                 ┌─────────────────────┐
+                 │  Business Request   │
+                 └──────────┬──────────┘
+                            v
+                 ┌─────────────────────┐
+                 │    Intake Agent     │
+                 │ Extract key details │
+                 └──────────┬──────────┘
+                            │ Structured intake
+                            v
+                 ┌─────────────────────┐
+                 │   Planning Agent    │
+                 │ Tasks & dependencies│
+                 └──────────┬──────────┘
+                            │ Proposed plan
+                            v
+                 ┌─────────────────────┐
+                 │    Review Agent     │
+                 │ Review & report     │
+                 └──────────┬──────────┘
+                            v
+                 ┌─────────────────────┐
+                 │ Workflow Result     │
+                 └─────────────────────┘
+
+                    Orchestrator coordinates
+                       the workflow stages
+```
+
+The orchestrator coordinates the sequence and passes information between
+stages. Planning uses the structured intake output, and Review evaluates
+the generated plan. This separation makes the workflow easier to
+inspect, test, and debug.
+
+## Reliability Features
+
+-   Shared Gemini client for centralized model configuration and error
+    handling.
 -   Bounded retries for selected temporary server errors (HTTP 500, 502,
-    503, 504).
--   No automatic retries for quota/authentication errors in the shared
-    client.
+    503, and 504).
 -   Structured schemas for expected data shapes.
 -   Workflow status and execution identifiers for tracking.
 -   Database-backed history/persistence as implemented in the project.
--   Missing owners and unresolved details can remain visible in the
-    result.
+-   Unresolved task owners and other missing information can remain
+    visible in the result.
 
-### Example workflow result
+## Example Workflow Result
 
-A tested example requested a customer analytics dashboard. The workflow
-extracted a requirements-document task for Priya, a November 15, 2026
-deadline, and a data-privacy constraint. It generated implementation and
-testing dependencies while leaving their owners unresolved. The recorded
-run returned `APPROVED`, `Completed`, and `approved: true`, with no
-reported review issues. This demonstrates plan generation and review for
-that run---not completion of the actual dashboard.
+A tested example requested a plan for launching a customer analytics
+dashboard. The workflow identified a requirements-document task for
+Priya, a November 15, 2026 deadline, and a data-privacy constraint. It
+generated implementation and testing dependencies while leaving their
+owners unresolved. The recorded result was `APPROVED`, with the workflow
+marked `Completed` and no reported review issues. This demonstrates plan
+generation and review for that run---not implementation or testing of
+the actual dashboard.
 
 ------------------------------------------------------------------------
 
-# Technology Stack
+# 🧰 Technology Stack
 
   -----------------------------------------------------------------------
-  Area                                Technology
+  Layer                               Technology
   ----------------------------------- -----------------------------------
-  Language / UI                       Python, Streamlit
+  Language                            Python
+
+  UI                                  Streamlit
 
   LLM                                 Google Gemini API
 
-  Structured validation               Pydantic
+  Schema validation                   Pydantic
 
-  External integrations               Gmail API and Google Calendar API
-                                      (Assignment 1)
+  Email integration                   Gmail API (Assignment 1)
 
-  Workflow design                     Modular Python functions and
-                                      multi-agent orchestration
-                                      (Assignment 2)
+  Scheduling integration              Google Calendar API (Assignment 1)
+
+  Workflow orchestration              Modular Python functions and
+                                      three-agent workflow (Assignment 2)
 
   Persistence                         Database layer; Sales Assistant
-                                      defaults to local SQLite when
-                                      `DATABASE_URL` is not set
+                                      uses local SQLite when
+                                      `DATABASE_URL` is not configured
 
   Testing                             pytest
 
-  Deployment / VCS                    Streamlit Community Cloud, Git,
-                                      GitHub
+  Hosting                             Streamlit Community Cloud
+
+  Version control                     Git & GitHub
   -----------------------------------------------------------------------
 
-## Repository structure
+## 📁 Repository Structure
 
 ``` text
 mudita-ai-assignment/
 ├── assignment1_sales/
-│   ├── conversation.py
-│   ├── policy.py
-│   ├── qualification.py
-│   └── routing.py
+│   ├── conversation.py       # Gemini-powered customer conversation
+│   ├── policy.py             # Company policy and defaults
+│   ├── qualification.py      # Lead qualification rules
+│   └── routing.py            # Representative assignment
 ├── assignment2_agents/
-│   ├── intake_agent.py
-│   ├── planning_agent.py
-│   ├── review_agent.py
-│   └── orchestrator.py
+│   ├── intake_agent.py       # Request understanding and extraction
+│   ├── planning_agent.py    # Task planning and dependencies
+│   ├── review_agent.py      # Plan review
+│   └── orchestrator.py     # Agent coordination and handoffs
 ├── core/
-│   ├── config.py
-│   ├── database.py
-│   ├── gemini_client.py
-│   └── schemas.py
+│   ├── config.py             # Shared configuration
+│   ├── database.py           # Persistence and action history
+│   ├── gemini_client.py      # Shared Gemini API client
+│   └── schemas.py            # Structured response schemas
 ├── integrations/
-│   ├── calendar_client.py
-│   └── gmail_client.py
-├── docs/
-├── tests/
-├── sales_app.py
-├── app.py
+│   ├── calendar_client.py    # Calendar availability and booking
+│   └── gmail_client.py       # Gmail connection and retrieval
+├── docs/                     # Assignment-specific documentation
+├── tests/                    # Automated tests
+├── sales_app.py              # Assignment 1 Streamlit entry point
+├── app.py                    # Assignment 2 Streamlit entry point
 ├── requirements.txt
 └── .gitignore
 ```
 
 ------------------------------------------------------------------------
 
-# Local Setup
+# ⚙️ Local Setup
 
 ## Prerequisites
 
--   Python compatible with `requirements.txt` (use the project's tested
-    environment where possible).
+-   Python version compatible with `requirements.txt` (use the
+    environment in which the project was tested).
 -   Git.
--   Gemini API key for AI-powered features.
--   Google OAuth authorization/token data if using Gmail or Calendar.
+-   A Gemini API key for AI-powered features.
+-   Google OAuth authorization/token data for Gmail and Calendar
+    features.
 
-## 1. Clone and install
+## 1. Clone the repository
 
 ``` bash
 git clone https://github.com/PAWAN0207/mudita-ai-assignment.git
 cd mudita-ai-assignment
-python -m venv .venv
 ```
+
+## 2. Create and activate a virtual environment
 
 **Windows PowerShell**
 
 ``` powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
 **macOS / Linux**
 
 ``` bash
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install dependencies:
+## 3. Install dependencies
 
 ``` bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## 2. Environment variables and secrets
+## 4. Configure environment variables
 
 Create a local `.env` file in the repository root and set only the
-values needed for the features you use:
+values needed for your setup:
 
 ``` dotenv
-GEMINI_API_KEY=replace_with_your_own_key
+GEMINI_API_KEY=your_own_api_key
 GEMINI_MODEL=gemini-3.8-flash
 DATABASE_URL=
 ```
 
--   `GEMINI_API_KEY` --- required for Gemini-powered features.
--   `GEMINI_MODEL` --- optional model override. The shared Gemini client
-    defaults to `gemini-3.8-flash`; `core/config.py` has a separate
-    default for its configuration consumers. Set this variable
-    explicitly if both should use the same model.
--   `DATABASE_URL` --- optional database connection URL. When omitted,
-    the Sales Assistant configuration falls back to SQLite under
-    `data/`.
+  -----------------------------------------------------------------------
+  Variable                            Purpose
+  ----------------------------------- -----------------------------------
+  `GEMINI_API_KEY`                    API key used by Gemini-powered
+                                      features.
 
-For Gmail and Calendar, the integration clients support authorized-user
-token JSON through `GMAIL_TOKEN_JSON` and `CALENDAR_TOKEN_JSON`. Local
-token files can also be used: - Gmail: `gmail_token.json` - Calendar:
-`token.json`
+  `GEMINI_MODEL`                      Optional model override. The shared
+                                      Gemini client defaults to
+                                      `gemini-3.8-flash`;
+                                      `core/config.py` has a separate
+                                      default for its configuration
+                                      consumers. Set it explicitly if
+                                      both should use the same model.
 
-These values/files contain sensitive OAuth information. Never commit
-`.env`, `credentials.json`, `gmail_token.json`, `token.json`, API keys,
-OAuth tokens, or account credentials. Enable the required Google APIs
-and grant only the necessary scopes. Use dedicated test accounts.
+  `DATABASE_URL`                      Optional database connection URL.
+                                      When omitted, the Sales Assistant
+                                      configuration falls back to a local
+                                      SQLite database under `data/`.
 
-## 3. Run each application
+  `GMAIL_TOKEN_JSON`                  Authorized-user OAuth token JSON
+                                      for Gmail, when configured through
+                                      environment variables/secrets.
 
-**Assignment 1 --- Sales Assistant**
+  `CALENDAR_TOKEN_JSON`               Authorized-user OAuth token JSON
+                                      for Calendar, when configured
+                                      through environment
+                                      variables/secrets.
+  -----------------------------------------------------------------------
+
+The Gmail and Calendar clients may also use local token files expected
+by their implementation (Gmail: `gmail_token.json`; Calendar:
+`token.json`). Enable the required Google APIs and grant only the scopes
+the application needs.
+
+> **Security:** Never commit `.env`, `credentials.json`,
+> `gmail_token.json`, `token.json`, API keys, OAuth tokens, or account
+> credentials. Use dedicated test accounts for demonstrations.
+
+## 5. Run Assignment 1 --- Sales Assistant
 
 ``` bash
 streamlit run sales_app.py
 ```
 
-**Assignment 2 --- Operations Coordinator** (in a second terminal)
+## 6. Run Assignment 2 --- Operations Coordinator
+
+Open a second terminal, activate the same environment, and run:
 
 ``` bash
 streamlit run app.py
 ```
 
-Use the local URL printed by Streamlit.
+Open the local URL printed by Streamlit for each app.
 
 ------------------------------------------------------------------------
 
-# Streamlit Cloud Deployment and Demo Access
+# ☁️ Streamlit Cloud Deployment & Demo Access
 
--   **Sales Assistant:** https://mudita-sales-assistant.streamlit.app/
--   **Operations Coordinator:**
-    https://mudita-operations-coordinator.streamlit.app/
+  --------------------------------------------------------------------------------------------
+  App                                 Public URL
+  ----------------------------------- --------------------------------------------------------
+  Sales Assistant                     <https://mudita-sales-assistant.streamlit.app/>
 
-Configure secrets in each app's Streamlit Cloud settings. Do not place
-secret values in source code or README files. Secret names used by the
-current code include:
+  Operations Coordinator              <https://mudita-operations-coordinator.streamlit.app/>
+  --------------------------------------------------------------------------------------------
+
+Configure required secrets in the corresponding Streamlit Cloud app
+settings. Do not store secret values in source code or this README.
+
+Example **secret names** (configure only those required by the deployed
+features):
 
 ``` toml
 GEMINI_API_KEY = "..."
@@ -407,89 +523,67 @@ CALENDAR_TOKEN_JSON = "..."
 DATABASE_URL = "..."
 ```
 
-Configure only the secrets required by the features you intend to
-expose. Local SQLite/filesystem persistence may not survive all cloud
-restarts or redeploys; verify deployed persistence before relying on it.
+### Public demo safety
 
-### Public-demo security
-
-The Streamlit URLs are publicly reachable. Do not expose a personal
-Gmail inbox or personal Calendar to arbitrary visitors. For a public
-demo, use a dedicated test Google account, synthetic emails, and a test
-calendar. Restrict or disable sensitive integration actions if that
-isolation is not in place. Public access to the UI does not
-automatically make OAuth-backed actions safe for unrestricted use.
+The app URLs are public. Do not expose a personal Gmail inbox or
+personal Calendar to arbitrary visitors. Use a dedicated test Google
+account, synthetic emails, and a test calendar. Restrict or disable
+sensitive actions if that isolation is not configured. Public UI access
+does not automatically make OAuth-backed operations safe for
+unrestricted public use.
 
 ### Seven-day availability checklist
 
-1.  Open both links in a private/incognito browser window.
-2.  Confirm each app loads.
-3.  Test the main workflow using safe sample data.
-4.  Check integration status separately from page-load status.
-5.  Keep both deployments available for at least seven days after
+-   [ ] Open both links in a private/incognito browser window.
+-   [ ] Confirm each application loads.
+-   [ ] Test the primary workflow with safe sample input.
+-   [ ] Check third-party integration status separately from page-load
+    status.
+-   [ ] Keep both deployments accessible for at least seven days after
     submission.
-6.  Recheck the links during that window.
+-   [ ] Recheck links during that period.
 
 ------------------------------------------------------------------------
 
-# Testing
+# 🧪 Testing
 
-Previously recorded test results:
+## Automated test result: **22 tests passed**
 
-  Suite                                       Reported result
-  ----------------------------------------- -----------------
-  Assignment 1 --- Sales Assistant                      11/11
-  Assignment 2 --- Operations Coordinator               10/10
-  **Total**                                         **21/21**
-
-These are the earlier recorded results, not a guarantee for any later
-code revision. Re-run tests against the exact final code before
-submission and update this section if results change.
-
-**Sales Assistant safety/calendar tests**
-
-``` bash
-python -m pytest test_booking_safety.py test_calendar_booking.py test_calendar_validation.py -v
-```
-
-**Operations Coordinator**
-
-``` bash
-python -m pytest tests/ -v
-```
-
-**Full test discovery (optional)**
+Run the test suite against the final code before submission to ensure
+the result matches the exact version being submitted.
 
 ``` bash
 python -m pytest -v
 ```
 
-Automated tests do not guarantee live Gemini, Gmail, or Calendar
-availability. Live behavior depends on credentials, scopes, quota,
-network access, and provider status.
+If tests are split into separate suites, run the test paths present in
+the repository. Tests can validate local logic and mocked behavior, but
+they do not guarantee live Gemini, Gmail, or Calendar availability. Live
+behavior depends on credentials, permissions, quota, network access, and
+provider status.
 
 ------------------------------------------------------------------------
 
-# Approximate Model Cost per Run
+# 💰 Approximate Model Cost per Run
 
-The application does not currently record token usage per workflow. The
-numbers below are **illustrative estimates, not measured billing
-results**. They assume the published standard paid rates for Gemini 3.8
-Flash through December 31, 2026: **US\$0.75 per 1M input tokens** and
-**US\$3.75 per 1M output tokens**. See [official Gemini API
-pricing](https://ai.google.dev/gemini-api/docs/pricing).
+The application does not currently meter token usage per workflow, so
+the figures below are **illustrative estimates, not measured billing
+results**. They assume example paid rates of **US\$0.75 per 1 million
+input tokens** and **US\$3.75 per 1 million output tokens** for the
+selected Gemini model. Check the [official Gemini API pricing
+page](https://ai.google.dev/gemini-api/docs/pricing) before submission
+because model rates and terms can change.
 
   ------------------------------------------------------------------------
-  Workflow              Illustrative token           Approximate paid cost
+  Workflow              Example token                     Approximate cost
                         assumption            
   --------------------- --------------------- ----------------------------
   Assignment 1 --- one  1,000 input + 300           **US\$0.0019 per model
-  customer-message      output tokens                               call**
-  response                                    
+  customer response     output tokens                               call**
 
-  Assignment 2 --- full 6,000 input + 2,000     **US\$0.012 per workflow**
+  Assignment 2 ---      6,000 input + 2,000     **US\$0.012 per workflow**
   three-agent workflow  output tokens across  
-                        agent calls           
+                        all agent calls       
   ------------------------------------------------------------------------
 
 Calculations: - Sales:
@@ -497,101 +591,108 @@ Calculations: - Sales:
 `(6,000 × $0.75 + 2,000 × $3.75) / 1,000,000 = $0.012`
 
 Actual cost depends on model selection, prompt/context size, output
-length, retries, and current pricing. Extra retries can increase usage.
-Requests covered by an applicable free tier may incur no API charge,
-subject to quota and current terms. These estimates should not be
-presented as measured costs.
+length, retries, and current provider pricing. Extra retries may
+increase usage. Requests covered by an applicable free tier may incur no
+API charge, subject to quota and current terms. These estimates are not
+measured per-run costs.
 
 ------------------------------------------------------------------------
 
-# Known Limitations
+# ⚠️ Known Limitations
 
 ## Assignment 1 --- Sales Assistant
 
--   Model responses can be malformed or factually incorrect; JSON
+-   Model responses can be malformed or factually incorrect; schema
     validation checks structure, not truth.
--   Regex-based Gmail extraction can miss unusual wording.
+-   Regex-based Gmail extraction may miss information expressed in
+    unusual wording.
 -   Gmail functionality is read-only; the app does not send emails.
 -   Instagram and WhatsApp are not connected in this version.
--   Gmail and Calendar features require valid authorized credentials and
-    third-party availability.
+-   Gmail and Calendar features require valid authorization and depend
+    on third-party availability.
 -   Calendar availability can change between checks. Revalidation and
     duplicate safeguards reduce, but do not eliminate, concurrent
     booking conflicts.
--   Public demos should use dedicated test accounts rather than personal
-    inboxes/calendars.
+-   Public demonstrations should use dedicated test accounts rather than
+    personal inboxes or calendars.
 
 ## Assignment 2 --- Operations Coordinator
 
--   Output quality depends on the completeness of the input and the
-    model response.
+-   Output quality depends on input completeness and model responses.
 -   Missing owners or ambiguous requirements may require human
     clarification.
--   `APPROVED` means the proposed plan passed the configured review
+-   `APPROVED` indicates the proposed plan passed the configured review
     stage; it does not mean tasks were executed.
--   Retries cover selected transient server errors, not all quota,
-    permission, authentication, or invalid-request errors.
--   A successful earlier run does not guarantee continuous model
-    availability.
+-   Retries cover selected transient server errors, not every quota,
+    permission, authentication, or invalid-request error.
+-   A successful run does not guarantee continuous model availability.
 -   Persistence and recovery behavior depends on the configured database
-    and deployment environment.
+    and hosting environment.
 
-## Shared limitations
+## Shared
 
--   Live API calls depend on credentials, permissions, quota, and
-    provider availability.
--   Automated tests do not replace live smoke tests of both deployments.
+-   Live API calls depend on credentials, permissions, quota, network,
+    and provider availability.
+-   Automated tests do not replace a live smoke test of each deployed
+    application.
 -   Cost estimates are illustrative; per-run token usage is not
     currently metered.
 
 ------------------------------------------------------------------------
 
-# Security Checklist
+# 🔐 Security Checklist
 
 -   [ ] Keep `.env` out of Git.
--   [ ] Never commit API keys, OAuth client secrets, tokens, or
+-   [ ] Never commit API keys, OAuth client secrets, access tokens, or
     credential JSON files.
--   [ ] Use Streamlit Cloud Secrets for deployment secrets.
--   [ ] Use dedicated test Gmail and Calendar accounts for public demos.
+-   [ ] Store deployment secrets in Streamlit Cloud Secrets.
+-   [ ] Use dedicated test Gmail and Calendar accounts.
 -   [ ] Use synthetic, non-sensitive demo data.
--   [ ] Confirm booking actions require explicit confirmation.
+-   [ ] Require explicit confirmation for booking actions.
 -   [ ] Do not expose personal inboxes/calendars to public visitors.
 -   [ ] Rotate any secret that may have been published accidentally.
 
-# Loom Walkthrough (8--12 minutes)
+------------------------------------------------------------------------
 
-The walkthrough should cover both assignments: 1. Build approach,
-problem statements, and technology choices. 2. Assignment 1 success
-demo: conversation, extracted facts, qualification, routing. 3.
-Assignment 1 integrations: Gmail read-only analysis and Calendar
-confirmation safeguards. 4. Assignment 2 success demo: Intake, Planning,
-Review, dependencies, unresolved owners. 5. Architecture and context
-sharing across modules/agents. 6. One real observed failure or edge
-case; distinguish incomplete input from a technical failure. 7. One
-diagnosed bug: explain its impact and claim a fix only if it has been
-implemented and tested. 8. Remaining limitations and conclusion.
+# 🎥 Loom Walkthrough (8--12 Minutes)
 
-Reuse already-tested outputs where possible to conserve API quota. Do
-not present a failed live request as a successful result.
+The single walkthrough should cover both assignments:
 
-## Detailed Documentation
+1.  **Build approach:** Problem statements, technology choices, and
+    design goals.
+2.  **Assignment 1 success demo:** Customer conversation, extracted
+    facts, qualification, and routing.
+3.  **Integration behavior:** Gmail read-only email analysis and
+    Calendar confirmation safeguards.
+4.  **Assignment 2 success demo:** Intake, Planning, Review,
+    dependencies, and unresolved owners.
+5.  **Architecture and context sharing:** How data moves between modules
+    and agents.
+6.  **Success/failure or edge case:** Show a real observed result. Do
+    not describe missing information as a technical failure.
+7.  **One diagnosed bug:** Explain the actual bug, its impact, and claim
+    a fix only if it has been implemented and tested.
+8.  **Remaining limitations:** Provider availability, extraction
+    constraints, and cases requiring human clarification.
 
--   [Assignment 1 --- Sales
-    Assistant](docs/README_Assignment_1_Sales_Assistant.md)
--   [Assignment 2 --- Operations
-    Coordinator](docs/README_Assignment_2_Operations_Coordinator.md)
+Reuse tested outputs where possible to conserve API quota. If a live
+request fails during recording, explain the actual failure rather than
+presenting it as a success.
 
-## Author
+------------------------------------------------------------------------
 
-**Pawan Ajay Prasad** · Applied AI Engineering · Generative AI · Python
-· LLM Applications
+## 👤 Author
 
--   GitHub: [PAWAN0207](https://github.com/PAWAN0207)
--   Repository:
+**Pawan Ajay Prasad**\
+Applied AI Engineering · Generative AI · Python · LLM Applications
+
+-   **GitHub:** [PAWAN0207](https://github.com/PAWAN0207)
+-   **Repository:**
     [mudita-ai-assignment](https://github.com/PAWAN0207/mudita-ai-assignment)
 
 ------------------------------------------------------------------------
 
-*Built as an applied AI engineering project focused on practical LLM
-applications, explicit workflow logic, external-service integrations,
-safety checks, and testable software design.*
+::: {align="center"}
+**Built with a focus on practical AI workflows, clear architecture,
+external integrations, safety, and testability.**
+:::
