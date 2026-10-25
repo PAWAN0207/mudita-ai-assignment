@@ -1,9 +1,13 @@
 
 """Gmail API integration for the Mudita AI Sales Assistant."""
 
+import base64
+import json
+import os
 from pathlib import Path
 from typing import Any
 
+import streamlit as st
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -16,8 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CREDENTIALS_FILE = BASE_DIR / "credentials.json"
 GMAIL_TOKEN_FILE = BASE_DIR / "gmail_token.json"
 
-# Read-only access: the app can read email but cannot send, delete,
-# or modify messages.
+# Gmail remains strictly read-only.
 GMAIL_SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
 ]
@@ -27,12 +30,47 @@ class GmailConnectionError(RuntimeError):
     """Raised when Gmail authorization or API access fails."""
 
 
-def get_gmail_service():
-    """Authorize Gmail and return a Gmail API service."""
+def _get_secret(name: str, default=None):
+    """Read a value from Streamlit Secrets or environment variables."""
+
+    try:
+        value = st.secrets.get(name)
+        if value not in (None, ""):
+            return value
+    except Exception:
+        # Streamlit Secrets may not be configured during local execution.
+        pass
+
+    return os.getenv(name, default)
+
+
+def _get_gmail_credentials() -> Credentials:
+    """Load Gmail credentials from Cloud Secrets or the local token file."""
 
     credentials = None
 
-    if GMAIL_TOKEN_FILE.exists():
+    # Preferred cloud configuration: authorized-user token JSON in Secrets.
+    token_json = _get_secret("GMAIL_TOKEN_JSON")
+
+    if token_json:
+        try:
+            if isinstance(token_json, str):
+                token_data = json.loads(token_json)
+            else:
+                token_data = dict(token_json)
+
+            credentials = Credentials.from_authorized_user_info(
+                token_data,
+                GMAIL_SCOPES,
+            )
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise GmailConnectionError(
+                "GMAIL_TOKEN_JSON is invalid. "
+                "Configure a valid authorized-user token in Streamlit Secrets."
+            ) from exc
+
+    # Local development fallback.
+    if credentials is None and GMAIL_TOKEN_FILE.exists():
         try:
             credentials = Credentials.from_authorized_user_file(
                 str(GMAIL_TOKEN_FILE),
@@ -40,36 +78,43 @@ def get_gmail_service():
             )
         except (ValueError, OSError) as exc:
             raise GmailConnectionError(
-                "The Gmail token file could not be read. "
-                "Check the local OAuth setup."
+                "The local Gmail token file could not be read."
             ) from exc
 
-    if credentials and credentials.expired and credentials.refresh_token:
+    if credentials is None:
+        raise GmailConnectionError(
+            "Gmail credentials are unavailable. Configure GMAIL_TOKEN_JSON "
+            "in Streamlit Secrets or provide a valid local gmail_token.json."
+        )
+
+    if credentials.expired and credentials.refresh_token:
         try:
             credentials.refresh(Request())
         except RefreshError as exc:
             raise GmailConnectionError(
                 "Gmail authorization has expired or been revoked. "
-                "Reconnect Gmail using the authorization flow."
+                "Generate a fresh authorized-user token."
             ) from exc
 
-    if not credentials or not credentials.valid:
-        if not CREDENTIALS_FILE.exists():
-            raise GmailConnectionError(
-                "credentials.json was not found in the project root."
+        # Persist refreshed credentials locally when possible.
+        if GMAIL_TOKEN_FILE.exists() and not _get_secret("GMAIL_TOKEN_JSON"):
+            GMAIL_TOKEN_FILE.write_text(
+                credentials.to_json(),
+                encoding="utf-8",
             )
 
-        flow = InstalledAppFlow.from_client_secrets_file(
-            str(CREDENTIALS_FILE),
-            GMAIL_SCOPES,
+    if not credentials.valid:
+        raise GmailConnectionError(
+            "Gmail credentials are invalid. Reauthorize the Gmail account."
         )
 
-        credentials = flow.run_local_server(port=0)
+    return credentials
 
-    GMAIL_TOKEN_FILE.write_text(
-        credentials.to_json(),
-        encoding="utf-8",
-    )
+
+def get_gmail_service():
+    """Authorize Gmail and return a Gmail API service."""
+
+    credentials = _get_gmail_credentials()
 
     return build(
         "gmail",
@@ -99,7 +144,7 @@ def test_gmail_connection() -> dict[str, Any]:
         status_code = getattr(exc.resp, "status", "unknown")
         raise GmailConnectionError(
             f"Gmail API request failed (HTTP {status_code}). "
-            "Check API access and OAuth permissions."
+            "Check Gmail API access and OAuth permissions."
         ) from exc
 
 
@@ -133,21 +178,14 @@ def list_recent_emails(max_results: int = 10) -> list[dict[str, Any]]:
                     userId="me",
                     id=item["id"],
                     format="metadata",
-                    metadataHeaders=[
-                        "From",
-                        "To",
-                        "Subject",
-                        "Date",
-                    ],
+                    metadataHeaders=["From", "To", "Subject", "Date"],
                 )
                 .execute()
             )
 
             headers = {
                 header["name"].lower(): header["value"]
-                for header in message.get("payload", {}).get(
-                    "headers", []
-                )
+                for header in message.get("payload", {}).get("headers", [])
             }
 
             emails.append(
@@ -169,18 +207,12 @@ def list_recent_emails(max_results: int = 10) -> list[dict[str, Any]]:
     except HttpError as exc:
         status_code = getattr(exc.resp, "status", "unknown")
         raise GmailConnectionError(
-            f"Could not read Gmail inbox (HTTP {status_code}). "
-            "Check the Gmail API and authorization permissions."
+            f"Could not read Gmail inbox (HTTP {status_code})."
         ) from exc
 
+
 def get_email_details(message_id: str) -> dict[str, Any]:
-    """Fetch the full readable content of one Gmail message.
-
-    The Gmail integration remains read-only.
-    """
-
-    import base64
-    from email.utils import parsedate_to_datetime
+    """Fetch readable email content without modifying the message."""
 
     if not message_id or not isinstance(message_id, str):
         raise ValueError("A valid Gmail message ID is required.")
@@ -247,4 +279,3 @@ def get_email_details(message_id: str) -> dict[str, Any]:
         raise GmailConnectionError(
             f"Could not read email details (HTTP {status_code})."
         ) from exc
-

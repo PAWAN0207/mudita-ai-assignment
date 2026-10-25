@@ -1,24 +1,24 @@
+
+"""Google Calendar integration for the Mudita AI Sales Assistant."""
+
 import hashlib
+import json
+import os
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import streamlit as st
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from assignment1_sales.policy import get_default_policy
 
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-CREDENTIALS_FILE = BASE_DIR / "credentials.json"
 TOKEN_FILE = BASE_DIR / "token.json"
 
 TIMEZONE_NAME = "Asia/Kolkata"
@@ -27,39 +27,84 @@ TIMEZONE = ZoneInfo(TIMEZONE_NAME)
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
-# ============================================================
-# GOOGLE CALENDAR AUTHENTICATION
-# ============================================================
+def _get_secret(name: str, default=None):
+    """Read a value from Streamlit Secrets or environment variables."""
+
+    try:
+        value = st.secrets.get(name)
+        if value not in (None, ""):
+            return value
+    except Exception:
+        pass
+
+    return os.getenv(name, default)
+
 
 def get_calendar_service():
-    """
-    Authenticate with Google Calendar and return the API service.
-    Uses credentials.json and saves refreshed credentials in token.json.
-    """
+    """Authenticate and return the Google Calendar API service."""
+
     credentials = None
 
-    if TOKEN_FILE.exists():
-        credentials = Credentials.from_authorized_user_file(
-            str(TOKEN_FILE),
-            SCOPES,
+    # Preferred cloud configuration: authorized-user token JSON in Secrets.
+    token_json = _get_secret("CALENDAR_TOKEN_JSON")
+
+    if token_json:
+        try:
+            if isinstance(token_json, str):
+                token_data = json.loads(token_json)
+            else:
+                token_data = dict(token_json)
+
+            credentials = Credentials.from_authorized_user_info(
+                token_data,
+                SCOPES,
+            )
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                "CALENDAR_TOKEN_JSON is invalid. "
+                "Configure a valid authorized-user token in Streamlit Secrets."
+            ) from exc
+
+    # Local development fallback.
+    if credentials is None and TOKEN_FILE.exists():
+        try:
+            credentials = Credentials.from_authorized_user_file(
+                str(TOKEN_FILE),
+                SCOPES,
+            )
+        except (ValueError, OSError) as exc:
+            raise RuntimeError(
+                "The local Calendar token file could not be read."
+            ) from exc
+
+    if credentials is None:
+        raise RuntimeError(
+            "Calendar credentials are unavailable. Configure "
+            "CALENDAR_TOKEN_JSON in Streamlit Secrets or provide "
+            "a valid local token.json."
         )
 
-    if credentials and credentials.expired and credentials.refresh_token:
-        credentials.refresh(Request())
+    if credentials.expired and credentials.refresh_token:
+        try:
+            credentials.refresh(Request())
+        except RefreshError as exc:
+            raise RuntimeError(
+                "Google Calendar authorization has expired or been revoked. "
+                "Generate a fresh authorized-user token."
+            ) from exc
 
-    if not credentials or not credentials.valid:
-        if not CREDENTIALS_FILE.exists():
-            raise FileNotFoundError(
-                f"Google OAuth credentials file not found: {CREDENTIALS_FILE}"
+        # Persist refreshed credentials locally when possible.
+        if TOKEN_FILE.exists() and not _get_secret("CALENDAR_TOKEN_JSON"):
+            TOKEN_FILE.write_text(
+                credentials.to_json(),
+                encoding="utf-8",
             )
 
-        flow = InstalledAppFlow.from_client_secrets_file(
-            str(CREDENTIALS_FILE),
-            SCOPES,
+    if not credentials.valid:
+        raise RuntimeError(
+            "Google Calendar credentials are invalid. "
+            "Reauthorize the Calendar account."
         )
-        credentials = flow.run_local_server(port=0)
-
-    TOKEN_FILE.write_text(credentials.to_json(), encoding="utf-8")
 
     return build(
         "calendar",
@@ -69,21 +114,17 @@ def get_calendar_service():
     )
 
 
-# ============================================================
-# DATE AND TIME HELPERS
-# ============================================================
-
 def parse_calendar_datetime(value):
-    """
-    Parse a Google Calendar datetime string and return an aware datetime
-    in Asia/Kolkata.
-    """
+    """Parse a timezone-aware datetime and convert it to Asia/Kolkata."""
+
     if isinstance(value, datetime):
         parsed = value
     else:
         value = str(value).strip()
+
         if value.endswith("Z"):
             value = value[:-1] + "+00:00"
+
         parsed = datetime.fromisoformat(value)
 
     if parsed.tzinfo is None:
@@ -97,35 +138,25 @@ def parse_calendar_datetime(value):
 
 def _parse_customer_start_time(value):
     """Parse a requested booking start time; timezone is required."""
-    if isinstance(value, datetime):
-        parsed = value
-    else:
-        value = str(value).strip()
-        if value.endswith("Z"):
-            value = value[:-1] + "+00:00"
-        parsed = datetime.fromisoformat(value)
 
-    if parsed.tzinfo is None:
-        raise ValueError("Booking start_time must include a timezone.")
-
-    return parsed.astimezone(TIMEZONE)
+    return parse_calendar_datetime(value)
 
 
 def _parse_date(date_text):
     """Accept a date object or YYYY-MM-DD string."""
+
     if isinstance(date_text, datetime):
         return date_text.date()
+
     if isinstance(date_text, date):
         return date_text
+
     return date.fromisoformat(str(date_text))
 
 
-# ============================================================
-# LIST UPCOMING CALENDAR EVENTS
-# ============================================================
-
 def list_upcoming_events(max_results=10):
     """Return upcoming events from the primary Google Calendar."""
+
     if max_results < 1:
         raise ValueError("max_results must be at least 1.")
 
@@ -145,6 +176,7 @@ def list_upcoming_events(max_results=10):
     )
 
     events = []
+
     for event in response.get("items", []):
         start_info = event.get("start", {})
         end_info = event.get("end", {})
@@ -162,39 +194,40 @@ def list_upcoming_events(max_results=10):
     return events
 
 
-# ============================================================
-# FIND AVAILABLE TIME SLOTS
-# ============================================================
-
 def find_available_slots(
     date_text,
     start_hour=10,
     end_hour=18,
     duration_minutes=30,
 ):
-    """
-    Find available future slots for a date, excluding overlapping events.
-    This function returns availability within the requested hours; booking
-    validation separately enforces the company's weekday and working-hour policy.
-    """
+    """Find future, non-overlapping slots on a requested date."""
+
     requested_date = _parse_date(date_text)
 
     if not 0 <= start_hour < 24:
         raise ValueError("start_hour must be between 0 and 23.")
+
     if not 1 <= end_hour <= 24:
         raise ValueError("end_hour must be between 1 and 24.")
+
     if start_hour >= end_hour:
         raise ValueError("start_hour must be earlier than end_hour.")
+
     if duration_minutes <= 0:
         raise ValueError("duration_minutes must be positive.")
 
     service = get_calendar_service()
 
     day_start = datetime.combine(
-        requested_date, time(start_hour, 0), tzinfo=TIMEZONE
+        requested_date,
+        time(start_hour, 0),
+        tzinfo=TIMEZONE,
     )
+
     day_end = datetime.combine(
-        requested_date, time.min, tzinfo=TIMEZONE
+        requested_date,
+        time.min,
+        tzinfo=TIMEZONE,
     ) + timedelta(days=1)
 
     response = (
@@ -211,12 +244,19 @@ def find_available_slots(
     )
 
     busy_intervals = []
+
     for event in response.get("items", []):
         start_info = event.get("start", {})
         end_info = event.get("end", {})
 
-        event_start_value = start_info.get("dateTime", start_info.get("date"))
-        event_end_value = end_info.get("dateTime", end_info.get("date"))
+        event_start_value = start_info.get(
+            "dateTime",
+            start_info.get("date"),
+        )
+        event_end_value = end_info.get(
+            "dateTime",
+            end_info.get("date"),
+        )
 
         if not event_start_value or not event_end_value:
             continue
@@ -224,30 +264,38 @@ def find_available_slots(
         if "dateTime" in start_info:
             event_start = parse_calendar_datetime(event_start_value)
         else:
-            event_start_date = date.fromisoformat(event_start_value)
             event_start = datetime.combine(
-                event_start_date, time.min, tzinfo=TIMEZONE
+                date.fromisoformat(event_start_value),
+                time.min,
+                tzinfo=TIMEZONE,
             )
 
         if "dateTime" in end_info:
             event_end = parse_calendar_datetime(event_end_value)
         else:
-            event_end_date = date.fromisoformat(event_end_value)
             event_end = datetime.combine(
-                event_end_date, time.min, tzinfo=TIMEZONE
+                date.fromisoformat(event_end_value),
+                time.min,
+                tzinfo=TIMEZONE,
             )
 
         busy_intervals.append((event_start, event_end))
 
     available_slots = []
     current_slot = day_start
+
     working_day_end = datetime.combine(
-        requested_date, time.min, tzinfo=TIMEZONE
+        requested_date,
+        time.min,
+        tzinfo=TIMEZONE,
     ) + timedelta(hours=end_hour)
 
     now = datetime.now(TIMEZONE)
 
-    while current_slot + timedelta(minutes=duration_minutes) <= working_day_end:
+    while (
+        current_slot + timedelta(minutes=duration_minutes)
+        <= working_day_end
+    ):
         slot_end = current_slot + timedelta(minutes=duration_minutes)
 
         if current_slot > now:
@@ -255,6 +303,7 @@ def find_available_slots(
                 current_slot < busy_end and slot_end > busy_start
                 for busy_start, busy_end in busy_intervals
             )
+
             if not overlaps:
                 available_slots.append(
                     {
@@ -268,10 +317,6 @@ def find_available_slots(
     return available_slots
 
 
-# ============================================================
-# CREATE A GOOGLE CALENDAR BOOKING
-# ============================================================
-
 def create_calendar_booking(
     customer_name,
     customer_email,
@@ -280,26 +325,14 @@ def create_calendar_booking(
     customer_confirmed=False,
     duration_minutes=30,
 ):
-    """
-    Create a calendar booking only after explicit customer confirmation.
+    """Create a booking only after explicit customer confirmation."""
 
-    Safety measures:
-    - Requires explicit customer confirmation.
-    - Validates customer details and timezone-aware start time.
-    - Rejects past appointments.
-    - Enforces company weekdays, working hours, and meeting duration.
-    - Uses a deterministic event ID to prevent duplicate events.
-    - Rechecks availability immediately before insertion.
-    - Handles Google Calendar API conflicts.
-    """
-    # 1. Explicit customer confirmation is mandatory.
     if customer_confirmed is not True:
         raise ValueError(
             "Booking rejected: explicit customer confirmation "
             "is required before creating a calendar event."
         )
 
-    # 2. Validate required details.
     customer_name = str(customer_name).strip()
     customer_email = str(customer_email).strip().lower()
     service_name = str(service_name).strip()
@@ -321,7 +354,6 @@ def create_calendar_booking(
     if duration_minutes <= 0:
         raise ValueError("duration_minutes must be positive.")
 
-    # 3. Parse time and reject past appointments before policy checks.
     start = _parse_customer_start_time(start_time)
     now = datetime.now(TIMEZONE)
 
@@ -330,11 +362,13 @@ def create_calendar_booking(
             "Booking rejected: appointment must be in the future."
         )
 
-    # 4. Enforce configured company policy.
     policy = get_default_policy()
     working_hours = policy["working_hours"]
 
-    allowed_days = {day.lower() for day in working_hours["days"]}
+    allowed_days = {
+        day.lower() for day in working_hours["days"]
+    }
+
     if start.strftime("%A").lower() not in allowed_days:
         raise ValueError(
             "Booking rejected: appointments are only allowed "
@@ -345,7 +379,7 @@ def create_calendar_booking(
     closing_time = time.fromisoformat(working_hours["end"])
     start_clock = start.time().replace(tzinfo=None)
 
-    if not (opening_time <= start_clock < closing_time):
+    if not opening_time <= start_clock < closing_time:
         raise ValueError(
             "Booking rejected: appointment must start within "
             f"working hours ({working_hours['start']}–"
@@ -353,6 +387,7 @@ def create_calendar_booking(
         )
 
     policy_duration = working_hours["meeting_duration_minutes"]
+
     if duration_minutes != policy_duration:
         raise ValueError(
             "Booking rejected: meeting duration must be "
@@ -370,13 +405,17 @@ def create_calendar_booking(
             f"{working_hours['end']} {TIMEZONE_NAME}."
         )
 
-    # 5. Stable ID makes retries for the same email/service/start idempotent.
-    identity = f"{customer_email}|{service_name.casefold()}|{start.isoformat()}"
-    event_id = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:40]
+    identity = (
+        f"{customer_email}|{service_name.casefold()}|{start.isoformat()}"
+    )
+
+    event_id = hashlib.sha256(
+        identity.encode("utf-8")
+    ).hexdigest()[:40]
 
     service = get_calendar_service()
 
-    # 6. Check if this exact booking already exists.
+    # Check whether this exact booking already exists.
     try:
         existing_event = (
             service.events()
@@ -394,19 +433,20 @@ def create_calendar_booking(
             "start": start.isoformat(),
             "end": end.isoformat(),
             "message": (
-                "This booking already exists. No duplicate event was created."
+                "This booking already exists. "
+                "No duplicate event was created."
             ),
         }
+
     except HttpError as error:
         if error.resp.status != 404:
             raise
 
-    # 7. Recheck the chosen slot against actual calendar events.
-    # Use the policy window rather than midnight-to-midnight.
+    # Recheck availability immediately before insertion.
     available_slots = find_available_slots(
         start.date().isoformat(),
-        start_hour=int(opening_time.hour),
-        end_hour=int(closing_time.hour),
+        start_hour=opening_time.hour,
+        end_hour=closing_time.hour,
         duration_minutes=duration_minutes,
     )
 
@@ -422,7 +462,6 @@ def create_calendar_booking(
             "Refresh availability and select another slot."
         )
 
-    # 8. Prepare event body.
     event_body = {
         "id": event_id,
         "summary": f"{service_name} consultation - {customer_name}",
@@ -443,7 +482,6 @@ def create_calendar_booking(
         "attendees": [{"email": customer_email}],
     }
 
-    # 9. Insert event. sendUpdates='none' avoids sending attendee updates.
     try:
         event = (
             service.events()
@@ -468,7 +506,6 @@ def create_calendar_booking(
         }
 
     except HttpError as error:
-        # Another request may have inserted this deterministic event ID.
         if error.resp.status == 409:
             try:
                 existing_event = (
@@ -476,6 +513,7 @@ def create_calendar_booking(
                     .get(calendarId="primary", eventId=event_id)
                     .execute()
                 )
+
                 return {
                     "status": "already_booked",
                     "event_id": existing_event.get("id"),
@@ -485,6 +523,7 @@ def create_calendar_booking(
                         "No duplicate event was created."
                     ),
                 }
+
             except HttpError:
                 return {
                     "status": "booking_conflict",
@@ -498,15 +537,12 @@ def create_calendar_booking(
         raise
 
 
-# ============================================================
-# QUICK CONNECTION TEST
-# ============================================================
-
 if __name__ == "__main__":
     print("Connecting to Google Calendar...")
 
     try:
         calendar_service = get_calendar_service()
+
         calendar_info = (
             calendar_service.calendars()
             .get(calendarId="primary")
