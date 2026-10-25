@@ -30,7 +30,7 @@ Customer conversations, lead qualification, Gmail lead analysis, Calendar availa
 
 Submit a business request and inspect the Intake → Planning → Review multi-agent workflow.
 
-> **Demo access:** Open either link in your browser; local installation is not required to view the hosted app. Live feature availability depends on deployment configuration, API quota, and third-party authorization. Use synthetic, non-sensitive demo data only. Keep both apps accessible for at least **seven days after submission**.
+> **Demo access:** Open either link in your browser; local installation is not required to view the hosted app. Live feature availability depends on deployment configuration, API quota, and third-party authorization. Use synthetic, non-sensitive demo data only.
 
 ---
 
@@ -380,14 +380,6 @@ DATABASE_URL = "..."
 
 The app URLs are public. Do not expose a personal Gmail inbox or personal Calendar to arbitrary visitors. Use a dedicated test Google account, synthetic emails, and a test calendar. Restrict or disable sensitive actions if that isolation is not configured. Public UI access does not automatically make OAuth-backed operations safe for unrestricted public use.
 
-### Seven-Day Availability Checklist
-
-- [ ] Open both links in a private/incognito browser window.
-- [ ] Confirm each application loads.
-- [ ] Test the primary workflow with safe sample input.
-- [ ] Check third-party integration status separately from page-load status.
-- [ ] Keep both deployments accessible for at least seven days after submission.
-- [ ] Recheck links during that period.
 
 ---
 
@@ -465,22 +457,6 @@ Actual cost depends on model selection, prompt/context size, output length, retr
 
 ---
 
-## Loom Walkthrough (8–12 Minutes)
-
-The single walkthrough should cover both assignments:
-
-1. **Build approach:** Problem statements, technology choices, and design goals.
-2. **Assignment 1 success demo:** Customer conversation, extracted facts, qualification, and routing.
-3. **Integration behavior:** Gmail read-only email analysis and Calendar confirmation safeguards.
-4. **Assignment 2 success demo:** Intake, Planning, Review, dependencies, and unresolved owners.
-5. **Architecture and context sharing:** How data moves between modules and agents.
-6. **Success/failure or edge case:** Show a real observed result. Do not describe missing information as a technical failure.
-7. **One diagnosed bug:** Explain the actual bug, its impact, and claim a fix only if it has been implemented and tested.
-8. **Remaining limitations:** Provider availability, extraction constraints, and cases requiring human clarification.
-
-Reuse tested outputs where possible to conserve API quota. If a live request fails during recording, explain the actual failure rather than presenting it as a success.
-
----
 
 ## Author
 
