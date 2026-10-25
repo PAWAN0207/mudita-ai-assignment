@@ -1,5 +1,6 @@
 
 import os
+import time
 
 from dotenv import load_dotenv
 from google import genai
@@ -47,11 +48,18 @@ if not API_KEY:
 # Initialize Gemini client
 client = genai.Client(api_key=API_KEY)
 
+# Retry configuration
+MAX_ATTEMPTS = 3
+INITIAL_RETRY_DELAY = 2
+
 
 def generate_response(prompt: str, json_mode: bool = False) -> str:
     """
     Generate a response using the Gemini API.
-    Supports both normal text and JSON output.
+
+    Retries transient server errors up to three total attempts.
+    Does not automatically retry quota or authentication errors.
+    Supports normal text and JSON output.
     """
     if not prompt or not prompt.strip():
         raise ValueError("Prompt cannot be empty.")
@@ -63,26 +71,53 @@ def generate_response(prompt: str, json_mode: bool = False) -> str:
             response_mime_type="application/json"
         )
 
-    try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-            config=config,
-        )
-
-        response_text = response.text
-
-        if not response_text or not response_text.strip():
-            raise RuntimeError(
-                "Gemini returned an empty response. Please try again."
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt,
+                config=config,
             )
 
-        return response_text.strip()
+            response_text = response.text
 
-    except errors.APIError as exc:
-        raise RuntimeError(
-            f"Gemini API error (code={exc.code}): {exc.message}"
-        ) from exc
+            if not response_text or not response_text.strip():
+                raise RuntimeError(
+                    "Gemini returned an empty response. Please try again."
+                )
+
+            return response_text.strip()
+
+        except errors.APIError as exc:
+            status_code = getattr(exc, "code", None)
+
+            # Retry only temporary server-side errors.
+            # Do not retry quota, authentication, permission,
+            # invalid request, or model-not-found errors.
+            retryable = (
+                isinstance(status_code, int)
+                and status_code in (500, 502, 503, 504)
+            )
+
+            if retryable and attempt < MAX_ATTEMPTS:
+                delay = INITIAL_RETRY_DELAY * (2 ** (attempt - 1))
+
+                print(
+                    f"Temporary Gemini API error ({status_code}). "
+                    f"Retrying in {delay}s "
+                    f"(attempt {attempt + 1}/{MAX_ATTEMPTS})..."
+                )
+
+                time.sleep(delay)
+                continue
+
+            raise RuntimeError(
+                f"Gemini API error (code={status_code}): {exc.message}"
+            ) from exc
+
+    raise RuntimeError(
+        "Gemini request failed after multiple attempts."
+    )
 
 
 if __name__ == "__main__":
