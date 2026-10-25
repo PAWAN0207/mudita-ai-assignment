@@ -28,7 +28,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
 def _get_secret(name: str, default=None):
-    """Read a value from Streamlit Secrets or environment variables."""
+    """Read configuration from Streamlit Secrets or environment variables."""
 
     try:
         value = st.secrets.get(name)
@@ -44,8 +44,6 @@ def get_calendar_service():
     """Authenticate and return the Google Calendar API service."""
 
     credentials = None
-
-    # Preferred cloud configuration: authorized-user token JSON in Secrets.
     token_json = _get_secret("CALENDAR_TOKEN_JSON")
 
     if token_json:
@@ -65,7 +63,6 @@ def get_calendar_service():
                 "Configure a valid authorized-user token in Streamlit Secrets."
             ) from exc
 
-    # Local development fallback.
     if credentials is None and TOKEN_FILE.exists():
         try:
             credentials = Credentials.from_authorized_user_file(
@@ -93,7 +90,6 @@ def get_calendar_service():
                 "Generate a fresh authorized-user token."
             ) from exc
 
-        # Persist refreshed credentials locally when possible.
         if TOKEN_FILE.exists() and not _get_secret("CALENDAR_TOKEN_JSON"):
             TOKEN_FILE.write_text(
                 credentials.to_json(),
@@ -130,7 +126,7 @@ def parse_calendar_datetime(value):
     if parsed.tzinfo is None:
         raise ValueError(
             "Datetime must include a timezone. "
-            "Example: 2026-10-25T10:00:00+05:30"
+            "Example: 2026-10-26T14:00:00+05:30"
         )
 
     return parsed.astimezone(TIMEZONE)
@@ -157,8 +153,8 @@ def _parse_date(date_text):
 def list_upcoming_events(max_results=10):
     """Return upcoming events from the primary Google Calendar."""
 
-    if max_results < 1:
-        raise ValueError("max_results must be at least 1.")
+    if not 1 <= max_results <= 2500:
+        raise ValueError("max_results must be between 1 and 2500.")
 
     service = get_calendar_service()
     now = datetime.now(TIMEZONE)
@@ -185,8 +181,14 @@ def list_upcoming_events(max_results=10):
             {
                 "id": event.get("id"),
                 "summary": event.get("summary", "(No title)"),
-                "start": start_info.get("dateTime", start_info.get("date")),
-                "end": end_info.get("dateTime", end_info.get("date")),
+                "start": start_info.get(
+                    "dateTime",
+                    start_info.get("date"),
+                ),
+                "end": end_info.get(
+                    "dateTime",
+                    end_info.get("date"),
+                ),
                 "htmlLink": event.get("htmlLink"),
             }
         )
@@ -225,10 +227,10 @@ def find_available_slots(
     )
 
     day_end = datetime.combine(
-        requested_date,
+        requested_date + timedelta(days=1),
         time.min,
         tzinfo=TIMEZONE,
-    ) + timedelta(days=1)
+    )
 
     response = (
         service.events()
@@ -281,15 +283,14 @@ def find_available_slots(
 
         busy_intervals.append((event_start, event_end))
 
-    available_slots = []
-    current_slot = day_start
-
     working_day_end = datetime.combine(
         requested_date,
         time.min,
         tzinfo=TIMEZONE,
     ) + timedelta(hours=end_hour)
 
+    available_slots = []
+    current_slot = day_start
     now = datetime.now(TIMEZONE)
 
     while (
@@ -372,7 +373,7 @@ def create_calendar_booking(
     if start.strftime("%A").lower() not in allowed_days:
         raise ValueError(
             "Booking rejected: appointments are only allowed "
-            "Monday through Friday."
+            "on permitted working days."
         )
 
     opening_time = time.fromisoformat(working_hours["start"])
@@ -415,7 +416,6 @@ def create_calendar_booking(
 
     service = get_calendar_service()
 
-    # Check whether this exact booking already exists.
     try:
         existing_event = (
             service.events()
@@ -432,17 +432,13 @@ def create_calendar_booking(
             "service_name": service_name,
             "start": start.isoformat(),
             "end": end.isoformat(),
-            "message": (
-                "This booking already exists. "
-                "No duplicate event was created."
-            ),
+            "message": "This booking already exists.",
         }
 
     except HttpError as error:
         if error.resp.status != 404:
             raise
 
-    # Recheck availability immediately before insertion.
     available_slots = find_available_slots(
         start.date().isoformat(),
         start_hour=opening_time.hour,
@@ -518,10 +514,7 @@ def create_calendar_booking(
                     "status": "already_booked",
                     "event_id": existing_event.get("id"),
                     "event_link": existing_event.get("htmlLink"),
-                    "message": (
-                        "This booking already exists. "
-                        "No duplicate event was created."
-                    ),
+                    "message": "This booking already exists.",
                 }
 
             except HttpError:
@@ -538,19 +531,20 @@ def create_calendar_booking(
 
 
 if __name__ == "__main__":
-    print("Connecting to Google Calendar...")
-
     try:
-        calendar_service = get_calendar_service()
+        service = get_calendar_service()
 
         calendar_info = (
-            calendar_service.calendars()
+            service.calendars()
             .get(calendarId="primary")
             .execute()
         )
 
         print("Calendar connection: SUCCESS")
-        print("Calendar:", calendar_info.get("summary", "Primary Calendar"))
+        print(
+            "Calendar:",
+            calendar_info.get("summary", "Primary Calendar"),
+        )
 
         events = list_upcoming_events(max_results=5)
         print("Upcoming events:", len(events))
